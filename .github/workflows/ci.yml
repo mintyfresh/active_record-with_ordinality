@@ -1,0 +1,149 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_call:
+
+jobs:
+  rubocop:
+    name: Rubocop
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        ruby:
+          - '3.2.11'
+          - '3.3.13'
+          - '3.4.12'
+          - '4.0.9'
+
+    steps:
+    - uses: actions/checkout@v7
+      with:
+        persist-credentials: false
+    - name: Set up Ruby
+      uses: ruby/setup-ruby@v1
+      with:
+        ruby-version: ${{ matrix.ruby }}
+        bundler-cache: true
+    - name: Rubocop
+      run: bin/rubocop --parallel
+
+  rspec_sqlite:
+    name: RSpec (SQLite)
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        ruby:
+          - '3.2.11'
+          - '3.3.13'
+          - '3.4.12'
+          - '4.0.9'
+
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - name: Set up Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: ${{ matrix.ruby }}
+          bundler-cache: true
+      - name: RSpec
+        run: bin/rspec
+        env:
+          RAILS_ENV: test
+          DATABASE_ADAPTER: sqlite3
+
+  rspec_postgresql:
+    name: RSpec (PostgreSQL)
+    runs-on: ubuntu-latest
+    
+    services:
+      postgres:
+        image: postgres:17.6
+        env:
+          POSTGRES_USER: with_ordinality
+          POSTGRES_PASSWORD: with_ordinality
+          POSTGRES_DB: with_ordinality_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    strategy:
+      matrix:
+        ruby:
+          - '3.2.11'
+          - '3.3.13'
+          - '3.4.12'
+          - '4.0.9'
+
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - name: Set up Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: ${{ matrix.ruby }}
+          bundler-cache: true
+      - name: RSpec
+        run: bin/rspec
+        env:
+          RAILS_ENV: test
+          DATABASE_ADAPTER: postgresql
+          DATABASE: with_ordinality_test
+          DATABASE_URL: postgres://with_ordinality:with_ordinality@localhost:5432/with_ordinality_test
+
+  rspec_mysql:
+    name: RSpec (MySQL)
+    runs-on: ubuntu-latest
+
+    services:
+      mysql:
+        image: mysql:8.4
+        env:
+          MYSQL_ROOT_PASSWORD: with_ordinality
+          MYSQL_USER: with_ordinality
+          MYSQL_PASSWORD: with_ordinality
+          MYSQL_DATABASE: with_ordinality_test
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd "mysqladmin ping -h 127.0.0.1"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    strategy:
+      matrix:
+        ruby:
+          - '3.2.11'
+          - '3.3.13'
+          - '3.4.12'
+          - '4.0.9'
+
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - name: Set up Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: ${{ matrix.ruby }}
+          bundler-cache: true
+      - name: RSpec
+        run: bin/rspec
+        env:
+          RAILS_ENV: test
+          DATABASE_ADAPTER: trilogy
+          DATABASE_ENCODING: utf8mb4
+          DATABASE: with_ordinality_test
+          DATABASE_URL: trilogy://with_ordinality:with_ordinality@127.0.0.1:3306/with_ordinality_test
