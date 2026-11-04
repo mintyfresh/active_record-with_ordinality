@@ -8,7 +8,7 @@ and orders relations by them with `in_order_of`.
 Add this line to your application's Gemfile:
 
 ```ruby
-gem 'active_record-with_ordinality', github: 'mintyfresh/active_record-with_ordinality'
+gem 'active_record-with_ordinality'
 ```
 
 And then execute:
